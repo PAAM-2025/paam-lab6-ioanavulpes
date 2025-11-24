@@ -1,6 +1,7 @@
 package upt.paam.lab6
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
 import com.google.android.gms.location.LocationCallback
@@ -75,9 +76,16 @@ class MainActivity : ComponentActivity() {
                             .align(Alignment.CenterHorizontally)
                             .padding(16.dp)
                     ) {
-                        LocationComposable()
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            LocationComposable()
+                            Button(
+                                onClick = { getCurrentLocation() },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text(text = "Get Current Location")
+                            }
+                        }
                     }
-                    // TODO 2: Add a button to call getCurrentLocation for retrieving current location
                 }
 
             }
@@ -113,7 +121,6 @@ class MainActivity : ComponentActivity() {
                 title = "One Marker"
             )
         }
-        // TODO 1: Create a marker and set its position from [latLngState].
     }
 
     override fun onResume() {
@@ -135,6 +142,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun getCurrentLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         if (isLocationPermissionGranted) {
@@ -148,7 +156,19 @@ class MainActivity : ComponentActivity() {
             ) {
                 return
             }
-            // TODO 3 Add a fusedLocationClient function to retrieve the current location and set the marker to point to that location
+            // Use getCurrentLocation with high accuracy priority to get the current location
+            val cancellationTokenSource = CancellationTokenSource()
+            fusedLocationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                cancellationTokenSource.token
+            ).addOnSuccessListener { location: Location? ->
+                location?.let {
+                    latLngState.value = LatLng(it.latitude, it.longitude)
+                }
+            }.addOnFailureListener { exception ->
+                // Handle failure
+                exception.printStackTrace()
+            }
         }
     }
 
